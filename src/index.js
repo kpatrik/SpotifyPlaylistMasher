@@ -23,14 +23,9 @@ app.use(allowCrossDomain);
 app.get('/', (req, res) => res.send('Hello World!'))
 
 app.get('/playlists', (req, res) => {
-  let access_token = req.body.access_token;
+  let access_token = req.query.access_token;
 
   spotifyApi.setAccessToken(access_token);
-
-  let scopes = [
-    'playlist-read-private',
-    'playlist-modify-public'
-  ]
 
   // Querying the user
   spotifyApi.getMe()
@@ -38,10 +33,10 @@ app.get('/playlists', (req, res) => {
       console.log('Now connected: ', data.body.display_name);
       spotifyApi.getUserPlaylists(data.body.id)
         .then((playlist_data) => {
-          let playlists = playlist_data.body;
-            /* .items.map((playlist) => {
+          let playlists = playlist_data.body
+            .items.map((playlist) => {
               return '' + playlist.name + ' (number of tracks: ' + playlist.tracks.total + ')';
-            }); */
+            });
           res.send(playlists);
         }, (err) => {
           console.log('Error while trying to get the playlists from user: ' + data.body.id, err);

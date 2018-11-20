@@ -28,6 +28,39 @@ function getPlaylistById(playlistSpotifyId, callbacks) {
         .then((data) => callbacks.onSuccess(data.body), (err) => callbacks.onError(err));
 }
 
+function getTracksForPlaylist(playlistId, callbacks) {
+    getPlaylistById(playlistId, {
+        onSuccess: (playlist) => {
+            let tracks = playlist.tracks.items.map((track) => {
+                return track.track;
+            })
+            callbacks.onSuccess(tracks);
+        },
+        onError: (err) => callbacks.onError(err)
+    })
+}
+
+function createPlaylistForUser(tracks, name, callbacks) {
+    spotifyApi.getMe()
+        .then((user_data) => {
+            spotifyApi.createPlaylist(user_data.body.id, name)
+                .then((data) => {
+                    console.log(data.body);
+                    let trackUris = tracks.map((x) => x.uri);
+                    spotifyApi.addTracksToPlaylist(data.body.id, trackUris)
+                        .then((data) => {
+                            console.log(data.body);
+                        }, (err) => {
+                            console.log(err);
+                        })
+                }, (err) => {
+                    console.log(err);
+                })
+        }, (err) => {
+            console.log(err);
+        })    
+}
+
 module.exports = {
     setAccessToken: setAccessToken,
     getPlaylistsForUser: getPlaylistsForUser,

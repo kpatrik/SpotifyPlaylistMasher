@@ -24,12 +24,12 @@ function getPlaylistsForUser(callbacks) {
 }
 
 function getPlaylistById(playlistSpotifyId, callbacks) {
-    spotifyApi.getPlaylist(playlistSpotifyId)
+    return spotifyApi.getPlaylist(playlistSpotifyId)
         .then((data) => callbacks.onSuccess(data.body), (err) => callbacks.onError(err));
 }
 
 function getTracksForPlaylist(playlistId, callbacks) {
-    getPlaylistById(playlistId, {
+    return getPlaylistById(playlistId, {
         onSuccess: (playlist) => {
             let tracks = playlist.tracks.items.map((track) => {
                 return track.track;
@@ -45,13 +45,16 @@ function createPlaylistForUser(tracks, name, callbacks) {
         .then((user_data) => {
             spotifyApi.createPlaylist(user_data.body.id, name)
                 .then((data) => {
-                    console.log(data.body);
+                    console.log(data.body.id);
+                    const playlistId = data.body.id;
                     let trackUris = tracks.map((x) => x.uri);
                     spotifyApi.addTracksToPlaylist(data.body.id, trackUris)
                         .then((data) => {
                             console.log(data.body);
+                            callbacks.onSuccess({ playlistId });
                         }, (err) => {
                             console.log(err);
+                            callbacks.onError(err);
                         })
                 }, (err) => {
                     console.log(err);
@@ -64,5 +67,7 @@ function createPlaylistForUser(tracks, name, callbacks) {
 module.exports = {
     setAccessToken: setAccessToken,
     getPlaylistsForUser: getPlaylistsForUser,
-    getPlaylistById: getPlaylistById
+    getPlaylistById: getPlaylistById,
+    getTracksForPlaylist: getTracksForPlaylist,
+    createPlaylistForUser: createPlaylistForUser
 }

@@ -13,6 +13,7 @@ var allowCrossDomain = function (req, res, next) {
 }
 
 app.use(allowCrossDomain);
+app.use(express.json());
 
 app.get('/', (req, res) => res.send('Hello World!'));
 
@@ -57,6 +58,54 @@ app.get('/findPlaylist', (req, res) => {
             });
         }
     })
+});
+
+app.post('/createplaylist', (req, res) => {
+    let access_token = req.query.access_token;
+    spotifyApiWrapper.setAccessToken(access_token);
+
+    const playlistIds = req.body.playlistIds;
+    const name = req.body.name;
+
+    let songs = [];
+    songs.concat(1,2);
+    const songRequests = playlistIds.map( (playlistId) =>
+        spotifyApiWrapper.getTracksForPlaylist(playlistId, {
+            onSuccess: (tracks) => {
+                songs = songs.concat(tracks);
+            },
+            onError: (err) => {
+                console.log('Error while trying to get playlist with id: ' + playlistId + '\nDetails:\n' + err);
+                res.send({
+                    playlist: undefined,
+                    isValid: false,
+                    error: err
+                });
+            }
+        })
+    );
+
+    Promise.all(songRequests).then( () => {
+        console.log({name})
+        spotifyApiWrapper.createPlaylistForUser(songs, name, {
+            onSuccess: (data) => {
+                res.send({
+                    playlist: data,
+                    isValid: true,
+                    error: undefined
+                });
+            },
+            onError: (err) => {
+                console.log('Error while trying to create playlist.\nDetails:\n' + err);
+                res.send({
+                    playlist: undefined,
+                    isValid: false,
+                    error: err
+                });
+            }
+        })
+
+    });
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

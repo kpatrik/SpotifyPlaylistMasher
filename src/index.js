@@ -3,6 +3,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 var spotifyApiWrapper = require('./spotifyApiWrapperFacade');
+const playlistMasher = require('./playlistMasher');
 
 var allowCrossDomain = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -66,9 +67,10 @@ app.post('/createplaylist', (req, res) => {
 
     const playlistIds = req.body.playlistIds;
     const name = req.body.name;
+    const numberOfTracks = req.body.numberOfTracks;
+
 
     let songs = [];
-    songs.concat(1,2);
     const songRequests = playlistIds.map( (playlistId) =>
         spotifyApiWrapper.getTracksForPlaylist(playlistId, {
             onSuccess: (tracks) => {
@@ -86,11 +88,14 @@ app.post('/createplaylist', (req, res) => {
     );
 
     Promise.all(songRequests).then( () => {
-        console.log({name})
-        spotifyApiWrapper.createPlaylistForUser(songs, name, {
+        console.log({name});
+        const mashedTracks = playlistMasher(songs, numberOfTracks);
+        const tracksToGet = mashedTracks.map(item => item.track);
+        spotifyApiWrapper.createPlaylistForUser(tracksToGet, name, {
             onSuccess: (data) => {
                 res.send({
                     playlist: data,
+                    tracks: mashedTracks,
                     isValid: true,
                     error: undefined
                 });

@@ -1,7 +1,7 @@
 function playlistMasher(tracks, numberOfTracks) {
     const sumFunction = (accumulator, currentItem) => {
         const index = accumulator.map(item => item.track.id).indexOf(currentItem.id);
-        if(index > -1) {
+        if (index > -1) {
             accumulator[index].count++;
         } else {
             accumulator.push({
@@ -13,10 +13,10 @@ function playlistMasher(tracks, numberOfTracks) {
         return accumulator;
     }
 
-    const compare = (a,b) => {
-        if(a.count < b.count) {
+    const compare = (a, b) => {
+        if (a.count < b.count) {
             return 1;
-        } else if(a.count > b.count) {
+        } else if (a.count > b.count) {
             return -1;
         }
 

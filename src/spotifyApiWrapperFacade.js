@@ -61,7 +61,14 @@ function createPlaylistForUser(tracks, name, callbacks) {
                 })
         }, (err) => {
             console.log(err);
-        })    
+        })
+}
+
+function getRecommendationsForTracklist(tracks, count, callbacks) {
+    spotifyApi.getRecommendations({
+        seed_tracks: tracks,
+        limit: count       
+    }).then((data) => callbacks.onSuccess(data.body.tracks), (err) => callbacks.onError(err));
 }
 
 module.exports = {
@@ -69,5 +76,6 @@ module.exports = {
     getPlaylistsForUser: getPlaylistsForUser,
     getPlaylistById: getPlaylistById,
     getTracksForPlaylist: getTracksForPlaylist,
-    createPlaylistForUser: createPlaylistForUser
+    createPlaylistForUser: createPlaylistForUser,
+    getRecommendationsForTracklist: getRecommendationsForTracklist
 }

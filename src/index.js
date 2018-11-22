@@ -68,10 +68,8 @@ app.post('/createplaylist', (req, res) => {
     const playlistIds = req.body.playlistIds;
     const name = req.body.name;
     const numberOfTracks = req.body.numberOfTracks;
-
-
     let songs = [];
-    const songRequests = playlistIds.map( (playlistId) =>
+    const songRequests = playlistIds.map((playlistId) =>
         spotifyApiWrapper.getTracksForPlaylist(playlistId, {
             onSuccess: (tracks) => {
                 songs = songs.concat(tracks);
@@ -87,29 +85,61 @@ app.post('/createplaylist', (req, res) => {
         })
     );
 
-    Promise.all(songRequests).then( () => {
-        console.log({name});
+    Promise.all(songRequests).then(() => {
+        console.log({ name });
         const mashedTracks = playlistMasher(songs, numberOfTracks);
-        const tracksToGet = mashedTracks.map(item => item.track);
-        spotifyApiWrapper.createPlaylistForUser(tracksToGet, name, {
-            onSuccess: (data) => {
-                res.send({
-                    playlist: data,
-                    tracks: mashedTracks,
-                    isValid: true,
-                    error: undefined
-                });
-            },
-            onError: (err) => {
-                console.log('Error while trying to create playlist.\nDetails:\n' + err);
-                res.send({
-                    playlist: undefined,
-                    isValid: false,
-                    error: err
-                });
-            }
-        })
 
+        if (numberOfTracks > mashedTracks.length) {
+            let deficit = numberOfTracks - mashedTracks.length;
+            deficit = deficit > 100 ? 100 : deficit;
+            let topTrackIds = mashedTracks.slice(0, 4).map(t => t.track.id).join(',');
+            spotifyApiWrapper.getRecommendationsForTracklist(topTrackIds, deficit, {
+                onSuccess: recommendedTracks => {
+                    const tracksToGet = mashedTracks.map(item => item.track).concat(recommendedTracks);
+                    spotifyApiWrapper.createPlaylistForUser(tracksToGet, name, {
+                        onSuccess: (data) => {
+                            res.send({
+                                playlist: data,
+                                tracks: mashedTracks,
+                                isValid: true,
+                                error: undefined
+                            });
+                        },
+                        onError: (err) => {
+                            console.log('Error while trying to create playlist.\nDetails:\n' + err);
+                            res.send({
+                                playlist: undefined,
+                                isValid: false,
+                                error: err
+                            });
+                        }
+                    })
+                },
+                onError: err => {
+
+                }
+            })
+        } else {
+            const tracksToGet = mashedTracks.map(item => item.track);
+            spotifyApiWrapper.createPlaylistForUser(tracksToGet, name, {
+                onSuccess: (data) => {
+                    res.send({
+                        playlist: data,
+                        tracks: mashedTracks,
+                        isValid: true,
+                        error: undefined
+                    });
+                },
+                onError: (err) => {
+                    console.log('Error while trying to create playlist.\nDetails:\n' + err);
+                    res.send({
+                        playlist: undefined,
+                        isValid: false,
+                        error: err
+                    });
+                }
+            })
+        }
     });
 });
 
